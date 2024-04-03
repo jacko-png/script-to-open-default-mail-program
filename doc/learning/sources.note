@@ -1,0 +1,52 @@
+The answer isn't broken, but you did successfully manage to break it. If you had just left it with %%G at the end, you would have gotten the correct response. When executing a for /f loop with the tokens option set to retrieve multiple values (like tokens=2,* meaning get the second part and then everything that comes after), cmd.exe populates the specified variable with a one-character name and the required number of extra variables with consecutive characters as names for the extra values requested (here, the single %%G
+
+https://superuser.com/questions/995591/how-to-get-a-registry-value-and-set-into-a-variable-in-batch
+
+I used ChatGPT:
+User
+    I'm writing a command script on windows, and here's a snip:
+    ```my.cmd
+    FOR /F "DELIMS=^," %%F IN ('ECHO %RPATH%') DO ECHO %RPATH% & SET EXEPATH=%%F
+    ```
+
+    It results in 
+    ```stdout
+    C:\Users\JackHarro>ECHO D:\Program Files\Mozilla Thunderbird\thunderbird.exe,0   & SET EXEPATH=
+    D:\Program Files\Mozilla Thunderbird\thunderbird.exe 0
+    D:\Program Files\Mozilla Thunderbird\thunderbird.exe,0
+    ```
+
+As you can see, the FOR command gets %RPATH% WITHOUT the comma, when I am trying to separate the string by commas and grab the first occurence. Why is this happening, when %RPATH% clearly has a comma? Some fixes: a) how can I repair this FOR command or b) how else can I separate the string?
+
+For context, my default mail client is thunderbird and the user's name is JackHarro.
+
+ChatGPT
+
+    The issue you're encountering is due to the default behavior of the FOR /F command, which uses space and tab characters as delimiters by default. To handle commas as delimiters, you need to specify it explicitly. Here's how you can fix your script:
+
+    ```cmd
+
+    @echo off
+    SETLOCAL ENABLEDELAYEDEXPANSION
+
+    REM Example RPATH value
+    SET "RPATH=D:\Program Files\Mozilla Thunderbird\thunderbird.exe,0"
+
+    FOR /F "tokens=1 delims=," %%F IN ("%RPATH%") DO (
+        ECHO %RPATH%
+        SET "EXEPATH=%%F"
+    )
+
+    ECHO Final EXEPATH: !EXEPATH!
+
+    ENDLOCAL
+    ```
+    Explanation:
+
+        I've added SETLOCAL ENABLEDELAYEDEXPANSION and changed the way you access the EXEPATH variable. This is because within a loop in batch scripts, the variables are parsed before the loop executes. So, to get the updated value of EXEPATH within the loop, delayed expansion is used.
+
+        In the FOR /F loop, I've added tokens=1 delims=,. This specifies that you want to split the input by commas and only capture the first token.
+
+    By using delayed expansion and specifying the correct delimiters in the FOR /F loop, this script should correctly extract the first occurrence of the string before the comma from %RPATH%.
+
+The important part was using "%RPATH" instead of ECHO %RPATH%
